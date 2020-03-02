@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<!-- Fig. 14.26: cannon.html -->
+<!-- Cannon Game HTML5 document. -->
+<html>
+   <head>
+      <meta charset = "utf-8">
+      <title>Gravity Game</title>
+      <style type = "text/css">
+      html {
+         font-family: Futura, sans-serif;
+      }
+      body {
+         display:block;
+         font-family: Futura, sans-serif;
+         font-size: 13px;
+      }
+      #welcome {
+         font-size: 25px;
+      }
+      #theGame {
+         display:block;
+      }
+      canvas {
+         border: 2px solid black;
+      }
+      #introStuff {
+         display:flex;
+      }
+      #Message, .words {
+         margin-left: 30px;
+      }
+      .button {
+         border: none;
+         padding: 7px 16px;
+         text-align: center;
+         text-decoration: none;
+         display: inline-block;
+         font-size: 16px;
+         color: white;
+      }
+      #earthButton {
+         background-color: #d5313e;
+         margin-left: 50px;
+         width: 200px;
+      }
+      #earthButton:hover {
+         background-color: #ff5741;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #marsButton {
+         background-color: #d5313e;
+         margin-left: 50px;
+         width: 200px;
+      }
+      #marsButton:hover {
+         background-color: #ff5741;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #moonButton {
+         background-color: #d5313e;
+         margin-left: 50px;
+         width: 200px;
+      }
+      #moonButton:hover {
+         background-color: #ff5741;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #startButton {
+         background-color: #30a0d5;
+         margin-left: 50px;
+         width: 200px;
+      }
+      #startButton:hover {
+         background-color: #30caff;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #resetButton {
+         background-color: #30a0d5;
+         margin-left: 50px;
+         width: 200px;
+      }
+      #resetButton:hover {
+         background-color: #30caff;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #increaseSpeed, #decreaseSpeed {
+         background-color: #d5313e;
+         margin-left: 30px;
+      }
+      #increaseSpeed:hover, #decreaseSpeed:hover {
+         background-color: #ff5741;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #increaseTargets, #decreaseTargets {
+         background-color: #4200d5;
+         display: inline-block;
+         margin-left: 30px;
+      }
+      #increaseTargets:hover, #decreaseTargets:hover {
+        background-color: #812bff;
+        cursor: pointer;
+        box-shadow: 3px 3px 8px black;
+      }
+      #increaseBallSize, #increaseBallSpeed, #increaseBallDensity, #decreaseBallDensity, #decreaseBallSpeed, #decreaseBallSize {
+       background-color: #00d517;
+       margin-left: 30px;
+      }
+      #increaseBallSize:hover, #decreaseBallSize:hover, #increaseBallSpeed:hover, #decreaseBallSpeed:hover, #increaseBallDensity:hover, #decreaseBallDensity:hover {
+        background-color: #33ff32;
+        cursor: pointer;
+        box-shadow: 3px 3px 8px black;
+      }
+      #increaseGravity, #decreaseGravity {
+         background-color: #1a004f;
+         display: inline-block;
+         margin-left: 30px;
+      }
+      #increaseGravity:hover, #decreaseGravity:hover {
+         background-color: #2e0098;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+
+      #reverseGravity {
+         background-color: #1a004f;
+         display: inline-block;
+         margin-left: 30px;
+      }
+      #reverseGravity:hover {
+         background-color: #2e0098;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+
+      #startButton:active,
+      #increaseBallSize:active, #decreaseBallSize:active,
+      #increaseTargets:active, #decreaseTargets:active,
+      #increaseSpeed:active, #decreaseSpeed:active,
+      #increaseBallSpeed:active, #decreaseBallSpeed:active,
+      #increaseBallDensity:active, #decreaseBallDensity:active,
+      #increaseGravity:active, #decreaseGravity:active,
+      #reverseGravity:active, resetButton:active,
+      #marsButton:active, #moonButton:active,
+      #earthButton:active
+      {
+         border: none;
+         box-shadow: inset 3px 3px 8px black;
+      }
+      input:focus {
+         outline: 0;
+         -moz-outline-style: none;
+      }
+      h1 {
+         margin-top: 0;
+      }
+      h2 {
+         margin-left: 30px;
+      }
+      label {
+         margin-left: 10px;
+      }
+      .horizontal {
+         display: flex;
+      }
+      .vertical {
+         display: block;
+      }
+      </style>
+	   <script src = "cannon.js"></script>
+   </head>
+   <body>
+      <audio id = "blockerSound" preload = "auto">
+         <source src = "blocker_hit.mp3" type = "audio/mpeg"></audio>
+      <audio id = "targetSound" preload = "auto">
+         <source src = "target_hit.mp3" type = "audio/mpeg"></audio>
+      <audio id = "cannonSound" preload = "auto">
+         <source src = "cannon_fire.mp3" type = "audio/mpeg"></audio>
+
+      <div id="theGame">
+         <div id="introStuff" class="horizontal">
+            <div class="vertical">
+               <h1 id="welcome">Welcome to the gravity game! Can you win?</h1>
+               <h2>Click on the game canvas to shoot.</h2>
+            </div>
+            <p><input id = "marsButton" class="button" type = "button" value = "Mars"></p>
+            <p><input id = "moonButton" class="button" type = "button" value = "Moon"></p>
+            <p><input id = "earthButton" class="button" type = "button" value = "Earth"></p>
+         </div>
+         <div class="horizontal">
+            <div id="canvasSection" class="vertical">
+               <canvas id = "theCanvas" width = "700" height = "600"></canvas>
+               <div class="horizontal">
+                   <p><input id = "startButton" class="button" type = "button" value = "Start Game"></p>
+                   <p><input id = "resetButton" class="button" type = "button" value = "Reset Values"></p>
+               </div>
+            </div>
+            <div class="vertical">
+               <h1 class="words">Cannonball Options:</h1>
+               <div class="horizontal">
+                  <p><input id = "increaseBallSize" class="button" type = "button" value = "Increase"></p>
+                  <p><input id = "decreaseBallSize" class="button" type = "button" value = "Decrease"></p>
+                  <h2>Radius:</h2>
+                  <h2 id="bsize"></h2>
+               </div>
+               <div class="horizontal">
+                  <p><input id = "increaseBallDensity" class="button" type = "button" value = "Increase"></p>
+                  <p><input id = "decreaseBallDensity" class="button" type = "button" value = "Decrease"></p>
+                  <h2>Density:</h2>
+                  <h2 id="ballDensity"></h2>
+               </div>
+               <div class="horizontal">
+                  <p><input id = "increaseBallSpeed" class="button" type = "button" value = "Increase"></p>
+                  <p><input id = "decreaseBallSpeed" class="button" type = "button" value = "Decrease"></p>
+                  <h2>Speed:</h2>
+                  <h2 id="ballSpeed"></h2>
+               </div>
+               <h1 class="words">Other Options:</h1>
+               <div class="horizontal">
+                  <p><input id = "reverseGravity" class="button" type = "button" value = "Reverse Gravity!"></p>
+               </div>
+               <div class="horizontal">
+                  <p><input id = "increaseGravity" class="button" type = "button" value = "Increase"></p>
+                  <p><input id = "decreaseGravity" class="button" type = "button" value = "Decrease"></p>
+                  <h2>Force of Gravity:</h2>
+                  <h2 id="gravity"></h2>
+               </div>
+               <div class="horizontal">
+                  <p><input id = "increaseSpeed" class="button" type = "button" value = "Increase"></p>
+                  <p><input id = "decreaseSpeed" class="button" type = "button" value = "Decrease"></p>
+                  <h2 id="speedLevel">Blocker Speed:</h2>
+                  <h2 id="speed"></h2>
+               </div>
+               <div class="horizontal">
+                  <p><input id = "increaseTargets" class="button" type = "button" value = "Increase"></p>
+                  <p><input id = "decreaseTargets" class="button" type = "button" value = "Decrease"></p>
+                  <h2 id="targetNumber">Target Number:</h2>
+                  <h2 id="targets"></h2>
+               </div>
+               <h1 id="Message"></h1>
+               <h2 id="scores"></h2>
+               <h1 class="words">Press any key to restart.</h1>
+               <h1 class="words">Highscores:</h1>
+               <h2 id="highScores">
+                  <div id="firstHighScore"></div>
+               </h2>
+            </div>
+         </div>
+      </div>
+   </body>
+</html>
+
