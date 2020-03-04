@@ -15,8 +15,7 @@
          font-family: Futura, sans-serif;
          font-size: 13px;
       }
-      #welcome {
-         font-size: 25px;
+      .number {
       }
       #theGame {
          display:block;
@@ -32,17 +31,18 @@
       }
       .button {
          border: none;
-         padding: 7px 16px;
+         padding: 7px 10px;
          text-align: center;
          text-decoration: none;
          display: inline-block;
          font-size: 16px;
          color: white;
+         margin-top: 0;
+         margin-bottom: 0;
       }
       #earthButton {
          background-color: #d5313e;
          margin-left: 50px;
-         width: 200px;
       }
       #earthButton:hover {
          background-color: #ff5741;
@@ -52,7 +52,6 @@
       #marsButton {
          background-color: #d5313e;
          margin-left: 50px;
-         width: 200px;
       }
       #marsButton:hover {
          background-color: #ff5741;
@@ -62,9 +61,17 @@
       #moonButton {
          background-color: #d5313e;
          margin-left: 50px;
-         width: 200px;
       }
       #moonButton:hover {
+         background-color: #ff5741;
+         cursor: pointer;
+         box-shadow: 3px 3px 8px black;
+      }
+      #jupButton {
+         background-color: #d5313e;
+         margin-left: 50px;
+      }
+      #jupButton:hover {
          background-color: #ff5741;
          cursor: pointer;
          box-shadow: 3px 3px 8px black;
@@ -146,7 +153,7 @@
       #increaseBallSpeed:active, #decreaseBallSpeed:active,
       #increaseBallDensity:active, #decreaseBallDensity:active,
       #increaseGravity:active, #decreaseGravity:active,
-      #reverseGravity:active, resetButton:active,
+      #reverseGravity:active, #resetButton:active,
       #marsButton:active, #moonButton:active,
       #earthButton:active
       {
@@ -157,20 +164,41 @@
          outline: 0;
          -moz-outline-style: none;
       }
+      #title {
+         font-size: 45px;
+         margin-top: 0;
+         margin-bottom: 0;
+      }
       h1 {
          margin-top: 0;
+         margin-bottom: 0;
       }
       h2 {
+         font-size:18px;
          margin-left: 30px;
-      }
-      label {
-         margin-left: 10px;
+         margin-bottom: 0;
       }
       .horizontal {
          display: flex;
       }
       .vertical {
          display: block;
+      }
+      #msg {
+         position: relative;
+         z-index: 5;
+         margin-left: -725px;
+         margin-top: -570px;"
+      }
+      @media only screen and (max-device-width: 800px) {
+         #everything {
+            display: block;
+         }
+         #msg {
+            position: inherit;
+            z-index: inherit;
+            margin: 0;
+         }
       }
       </style>
 	   <script src = "cannon.js"></script>
@@ -182,44 +210,86 @@
          <source src = "target_hit.mp3" type = "audio/mpeg"></audio>
       <audio id = "cannonSound" preload = "auto">
          <source src = "cannon_fire.mp3" type = "audio/mpeg"></audio>
+      <audio id = "planetSwitchSound" preload = "auto">
+         <source src = "creepyHorror.mp3" type = "audio/mpeg"></audio>
+      <audio id = "missedSound" preload = "auto">
+         <source src = "bananaPeelSlip.mp3" type = "audio/mpeg"></audio>
+      <audio id = "monsterSound" preload = "auto">
+         <source src = "monsterGrowl.mp3" type = "audio/mpeg"></audio>
 
       <div id="theGame">
          <div id="introStuff" class="horizontal">
             <div class="vertical">
-               <h1 id="welcome">Welcome to the gravity game! Can you win?</h1>
-               <h2>Click on the game canvas to shoot.</h2>
+               <div id="title">Welcome to the gravity game! Can you win?</div>
+               <h2 style="margin:0;">Click on the game canvas to shoot. Press any key to restart.</h2>
+               <h2 style="margin:0;">Update: Use the arrow keys to move.</h2>
+               <h2 style="margin:0;">Hint: toggle the options to win.</h2>
             </div>
-            <p><input id = "marsButton" class="button" type = "button" value = "Mars"></p>
-            <p><input id = "moonButton" class="button" type = "button" value = "Moon"></p>
-            <p><input id = "earthButton" class="button" type = "button" value = "Earth"></p>
          </div>
-         <div class="horizontal">
+         <div id="everything" class="horizontal">
             <div id="canvasSection" class="vertical">
-               <canvas id = "theCanvas" width = "700" height = "600"></canvas>
+               <canvas id = "theCanvas" width = "700" height = "550"></canvas>
                <div class="horizontal">
                    <p><input id = "startButton" class="button" type = "button" value = "Start Game"></p>
                    <p><input id = "resetButton" class="button" type = "button" value = "Reset Values"></p>
                </div>
             </div>
-            <div class="vertical">
+            <div id="options" class="vertical">
+               <div class="horizontal">
+                  <h2 style="margin-top: 7px;">Change planet:</h2>
+                  <p><input id = "marsButton" class="button" type = "button" value = "Mars" style="margin-top: -20px; margin-left: 25px"></p>
+                  <p><input id = "jupButton" class="button" type = "button" value = "Jupiter" style="margin-top:-20px; margin-left: 25px"></p>
+                  <p><input id = "moonButton" class="button" type = "button" value = "Moon" style="margin-top:-20px; margin-left: 25px"></p>
+                  <p><input id = "earthButton" class="button" type = "button" value = "Earth" style="margin-top:-20px; margin-left: 25px"></p>
+               </div>
                <h1 class="words">Cannonball Options:</h1>
                <div class="horizontal">
                   <p><input id = "increaseBallSize" class="button" type = "button" value = "Increase"></p>
                   <p><input id = "decreaseBallSize" class="button" type = "button" value = "Decrease"></p>
-                  <h2>Radius:</h2>
-                  <h2 id="bsize"></h2>
+                  <div class="vertical">
+                     <div class="horizontal">
+                        <h2>Radius:</h2>
+                        <h2 id="ballSize" class="number"></h2>
+                     </div>
+                     <div class="horizontal" style="margin:0;">
+                        <h2>Volume</h2>
+                        <h2 style="margin-left:10px; margin-right:0;"> = </h2>
+                        <div class="vertical" style="margin-left:10px;; ">
+                           <p id="numerator" style="margin-bottom:0; margin-top:10px; font-family: Arial, serif; font-weight: bold; font-size:20px;"><u>3</u></p>
+                           <p id="denominator" style="margin:0; font-family: Arial, serif; font-weight: bold; font-size:20px;">4</p>
+                        </div>
+                        <div style="margin-top:17px; margin-left:3px; font-family: Arial, serif; font-weight: bold; font-size:20px;">&#960</div>
+                        <div id="volumeEquation" style="margin-top:17px; margin-left:3px; font-family: Arial, serif; font-weight: bold; font-size:20px;"></div>
+                        <sup style="margin-top:12px; font-family: Arial, serif; font-weight: bold; font-size:14px;">3</sup>
+                        <h2 style="margin-left:10px; margin-right:0;"> = </h2>
+                        <h2 id="volume" class="number" style="margin-left:10px;"></h2>
+                        <p style="margin-left:10px; margin-right:0; margin-top: 17px; font-family: Arial, serif; font-weight: bold; font-size:20px;">m</p>
+                        <sup style="margin-top:12px; font-family: Arial, serif; font-weight: bold; font-size:14px;">3</sup>
+                     </div>
+                  </div>
                </div>
                <div class="horizontal">
                   <p><input id = "increaseBallDensity" class="button" type = "button" value = "Increase"></p>
                   <p><input id = "decreaseBallDensity" class="button" type = "button" value = "Decrease"></p>
-                  <h2>Density:</h2>
-                  <h2 id="ballDensity"></h2>
+                  <div class="vertical">
+                     <div class="horizontal">
+                        <h2>Density:</h2>
+                        <h2 id="ballDensity" class="number"></h2>
+                     </div>
+                     <div class="horizontal">
+                        <h2>Mass</h2>
+                        <h2 style="margin-left:10px; margin-right:0;"> = </h2>
+                        <h2 id="mass" class="number" style="margin-left:10px;"></h2>
+                        <p style="margin-left:10px; margin-right:0; margin-top: 17px; font-family: Arial, serif; font-weight: bold; font-size:20px;"> kg</p>
+                     </div>
+                  </div>
                </div>
+
                <div class="horizontal">
                   <p><input id = "increaseBallSpeed" class="button" type = "button" value = "Increase"></p>
                   <p><input id = "decreaseBallSpeed" class="button" type = "button" value = "Decrease"></p>
                   <h2>Speed:</h2>
-                  <h2 id="ballSpeed"></h2>
+                  <h2 id="ballSpeed" class="number"></h2>
                </div>
                <h1 class="words">Other Options:</h1>
                <div class="horizontal">
@@ -229,28 +299,30 @@
                   <p><input id = "increaseGravity" class="button" type = "button" value = "Increase"></p>
                   <p><input id = "decreaseGravity" class="button" type = "button" value = "Decrease"></p>
                   <h2>Force of Gravity:</h2>
-                  <h2 id="gravity"></h2>
+                  <h2 id="gravity" class="number"></h2>
                </div>
                <div class="horizontal">
                   <p><input id = "increaseSpeed" class="button" type = "button" value = "Increase"></p>
                   <p><input id = "decreaseSpeed" class="button" type = "button" value = "Decrease"></p>
                   <h2 id="speedLevel">Blocker Speed:</h2>
-                  <h2 id="speed"></h2>
+                  <h2 id="speed" class="number"></h2>
                </div>
                <div class="horizontal">
                   <p><input id = "increaseTargets" class="button" type = "button" value = "Increase"></p>
                   <p><input id = "decreaseTargets" class="button" type = "button" value = "Decrease"></p>
                   <h2 id="targetNumber">Target Number:</h2>
-                  <h2 id="targets"></h2>
+                  <h2 id="targets" class="number"></h2>
                </div>
-               <h1 id="Message"></h1>
-               <h2 id="scores"></h2>
-               <h1 class="words">Press any key to restart.</h1>
-               <h1 class="words">Highscores:</h1>
-               <h2 id="highScores">
-                  <div id="firstHighScore"></div>
-               </h2>
+               <div id="msg">
+                  <h1 id="Message" style="font-size:22px;"></h1>
+                  <h2 id="scores"></h2>
+               </div>
             </div>
+         </div>
+         <div id="highScores" class="horizontal">
+            <h1 id="highScoreTitle" class="horizontal" style="display: none;">Highscores:</h1>
+            <h2 class="horizontal"></h2>
+            <div id="firstHighScore" class="horizontal"></div>
          </div>
       </div>
    </body>

@@ -5,6 +5,23 @@ var context; // used for drawing on the canvas
 
 var mars = false;
 var earth = false;
+var moon = false;
+var jupiter = false;
+var marsBackground = new Image();
+marsBackground.src = "mars.jpg";
+var earthBackground = new Image();
+earthBackground.src = "earth.png";
+var moonBackground = new Image();
+moonBackground.src = "moon.jpg";
+var jupiterBackground = new Image();
+jupiterBackground.src = "jupiter.jpg";
+
+var scores = 0;
+
+var missed = true;
+
+DARK_COLOR = "black";
+LIGHT_COLOR = "lavender";
 
 // constants for game play
 var TARGET_PIECES = 7; // sections in the target
@@ -47,8 +64,9 @@ var targetPiecesHit; // number of target pieces hit (out of 7)
 
 // variables for the cannon and cannonball
 var cannonball; // cannonball image's upper-left corner
-var cannonballVelocity; // cannonball's velocity
 var cannonballOnScreen; // is the cannonball on the screen
+
+var cannonballVelocity; // cannonball's velocity
 var cannonballRadius = 20; // cannonball radius
 var cannonballSpeed = 700 * 1.5; // cannonball speed
 var cannonballBaseSpeed = 700 * 1.5;
@@ -58,9 +76,11 @@ var cannonballMass; // in kg
 
 var gravity = -9.8;
 
+var cannon;
 var cannonBaseRadius; // cannon base radius
 var cannonLength; // cannon barrel length
 var barrelEnd; // the end point of the cannon's barrel
+var barrelDif;
 var canvasWidth; // width of the canvas
 var canvasHeight; // height of the canvas
 
@@ -68,6 +88,9 @@ var canvasHeight; // height of the canvas
 var targetSound;
 var cannonSound;
 var blockerSound;
+var planetSound;
+var missedSound;
+var monsterSound;
 
 // called when the app first launches
 function setupGame()
@@ -75,6 +98,7 @@ function setupGame()
    // stop timer if document unload event occurs
    document.addEventListener( "unload", stopTimer, false );
    document.addEventListener( "keypress", newGame, false );
+   document.addEventListener( "keydown", moveCannon, false);
 
    // get the canvas, its context and setup its click event handler
    canvas = document.getElementById( "theCanvas" );
@@ -85,6 +109,10 @@ function setupGame()
       "click", goToMars, false );
    document.getElementById( "earthButton" ).addEventListener(
       "click", goToEarth, false );
+   document.getElementById( "moonButton" ).addEventListener(
+      "click", goToMoon, false );
+   document.getElementById( "jupButton" ).addEventListener(
+      "click", goToJupiter, false );
 
    // start a new game when user clicks Start Game button
    document.getElementById( "startButton" ).addEventListener( 
@@ -136,6 +164,7 @@ function setupGame()
    cannonball = new Object(); // object representing cannonball point
    cannonballVelocity = new Object();  //will hold x-y coords of velocity
    barrelEnd = new Object(); // object representing end of cannon barrel
+   cannon = new Object();
 
    // initialize hitStates as an array
    hitStates = new Array(TARGET_PIECES);
@@ -147,6 +176,9 @@ function setupGame()
    targetSound = document.getElementById( "targetSound" );
    cannonSound = document.getElementById( "cannonSound" );
    blockerSound = document.getElementById( "blockerSound" );
+   planetSound = document.getElementById( "planetSwitchSound" );
+   missedSound = document.getElementById( "missedSound" );
+   monsterSound = document.getElementById( "monsterSound" );
    newGame();
 } // end function setupGame
 
@@ -168,12 +200,14 @@ function stopTimer()
 // relative to the size of the canvas before the game begins
 function resetElements()
 {
+   document.getElementById("Message").style.display = "none";
+   document.getElementById("scores").style.display = "none";
    var w = canvas.width;
    var h = canvas.height;
    canvasWidth = w; // store the width
    canvasHeight = h; // store the height
-   cannonBaseRadius = h / 14; // cannon base radius 1/18 canvas height
-   cannonLength = w / 8; // cannon length 1/8 canvas width
+   cannonBaseRadius = cannonballRadius * 1.1;
+   cannonLength = cannonBaseRadius * 3;
 
    //cannonballRadius = w / 36; // cannonball radius 1/36 canvas width
    //cannonballSpeed = w * 1.3; // cannonball speed multiplier
@@ -203,8 +237,9 @@ function resetElements()
    target.end.y = targetEnd;
 
    // end point of the cannon's barrel initially points horizontally
+   cannon.y = canvasHeight / 2;
    barrelEnd.x = cannonLength;
-   barrelEnd.y = h / 2;
+   barrelEnd.y = cannon.y;
    blockerThreshhold.x = 20;
    targetThreshhold.x = 20;
    blockerThreshhold.y = (cannonballRadius * 5) / blockerLength;
@@ -219,15 +254,28 @@ function resetElements()
 
    document.getElementById("speed").innerHTML = blockerSpeed + " pixels/second";
    document.getElementById("targets").innerHTML = TARGET_PIECES + " targets";
-   document.getElementById("bsize").innerHTML = cannonballRadius + " cm";
+   document.getElementById("ballSize" +
+       "").innerHTML = cannonballRadius + " cm";
+   document.getElementById("volumeEquation").innerHTML = cannonballRadius;
+   cannonballVolume = cannonballVolume * 100;
+   cannonballVolume = Math.trunc(cannonballVolume);
+   cannonballVolume = cannonballVolume / 100;
+   document.getElementById("volume").innerHTML = cannonballVolume;
+
    document.getElementById("ballSpeed").innerHTML = cannonballBaseSpeed + " m/s";
    document.getElementById("ballDensity").innerHTML = cannonballDensity + " kg/m<sup>3</sup>";
    document.getElementById("gravity").innerHTML = gravity + " m/s<sup>2</sup>";
+   cannonballMass = cannonballMass * 100;
+   cannonballMass = Math.trunc(cannonballMass);
+   cannonballMass = cannonballMass/100;
+   document.getElementById("mass").innerHTML = cannonballMass;
 } // end function resetElements
 
 // reset all the screen elements and start a new game
 function newGame()
 {
+   document.getElementById("Message").style.display = "none";
+   document.getElementById("scores").style.display = "none";
    resetElements(); // reinitialize all game elements
    stopTimer(); // terminate previous interval timer
    document.getElementById( "startButton" ).value = "Restart";
@@ -248,19 +296,80 @@ function newGame()
    startTimer(); // starts the game loop
 } // end function newGame
 
+function moveCannon(event) {
+   var key = event.code;
+   if (key === "ArrowUp") {
+      console.log("up arrow pressed");
+      if ((cannon.y > cannonBaseRadius + 50) && (barrelEnd.y > cannonBaseRadius + 50)) {
+         cannon.y = cannon.y - 50;
+         barrelEnd.y = cannon.y;
+         barrelDif = cannon.y - barrelEnd.y;
+      }
+   }
+   else if (key === "ArrowDown"){
+      if ((cannon.y < canvasHeight - cannonBaseRadius - 50) && (barrelEnd.y < canvasHeight - cannonBaseRadius - 50)) {
+         cannon.y = cannon.y + 50;
+         barrelEnd.y = cannon.y;
+      }
+   }
+}
+
 function goToMars() {
    earth = false;
    mars = true;
+   moon = false;
+   jupiter = false;
+
+   DARK_COLOR = "red";
+   LIGHT_COLOR = "white";
+
    gravity = -3.7;
    document.getElementById("gravity").innerHTML = gravity + " m/s<sup>2</sup>";
    draw();
+   planetSound.play();
 }
 
 function goToEarth() {
    earth = true;
    mars = false;
+   moon = false;
+   jupiter = false;
+
+   DARK_COLOR = "green";
+   LIGHT_COLOR = "white";
+
    gravity = -9.8;
    document.getElementById("gravity").innerHTML = gravity + " m/s<sup>2</sup>";
+   draw();
+   monsterSound.play();
+}
+
+function goToMoon() {
+   earth = false;
+   mars = false;
+   moon = true;
+   jupiter = false;
+
+   DARK_COLOR = "orange";
+   LIGHT_COLOR = "white";
+
+   gravity = -1.6;
+   document.getElementById("gravity").innerHTML = gravity + " m/s<sup>2</sup>";
+   planetSound.play();
+   draw();
+}
+function goToJupiter() {
+   earth = false;
+   mars = false;
+   moon = false;
+   jupiter = true;
+
+   DARK_COLOR = "blue";
+   LIGHT_COLOR = "white";
+
+   gravity = -24.8;
+   document.getElementById("gravity").innerHTML = gravity + " m/s<sup>2</sup>";
+   planetSound.play();
    draw();
 }
 
@@ -286,7 +395,17 @@ function reset() {
 
    document.getElementById("speed").innerHTML = blockerSpeed + " pixels/second";
    document.getElementById("targets").innerHTML = TARGET_PIECES + " targets";
-   document.getElementById("bsize").innerHTML = cannonballRadius + " cm";
+   document.getElementById("ballSize" +
+       "").innerHTML = cannonballRadius + " cm";
+   document.getElementById("volumeEquation").innerHTML = cannonballRadius;
+   cannonballVolume = cannonballVolume * 100;
+   cannonballVolume = Math.trunc(cannonballVolume);
+   cannonballVolume = cannonballVolume / 100;
+   document.getElementById("volume").innerHTML = cannonballVolume;
+   cannonballMass = cannonballMass * 100;
+   cannonballMass = Math.trunc(cannonballMass);
+   cannonballMass = cannonballMass/100;
+   document.getElementById("mass").innerHTML = cannonballMass;
    document.getElementById("ballSpeed").innerHTML = cannonballBaseSpeed + " m/s";
    document.getElementById("ballDensity").innerHTML = cannonballDensity + " kg/m<sup>3</sup>";
    document.getElementById("gravity").innerHTML = gravity + " m/s<sup>2</sup>";
@@ -323,15 +442,26 @@ function decreaseBallSpeed() {
 }
 
 function increaseBallDensity() {
-   cannonballDensity = cannonballDensity + 50;
+   cannonballDensity = cannonballDensity + 200;
    document.getElementById("ballDensity").innerHTML = cannonballDensity + " kg/m<sup>3</sup>";
    cannonballMass = cannonballDensity * cannonballVolume;
+
+   cannonballMass = cannonballMass * 100;
+   cannonballMass = Math.trunc(cannonballMass);
+   cannonballMass = cannonballMass/100;
+   document.getElementById("mass").innerHTML = cannonballMass;
+
 }
 
 function decreaseBallDensity() {
-   cannonballDensity = cannonballDensity - 50;
+   cannonballDensity = cannonballDensity - 200;
    document.getElementById("ballDensity").innerHTML = cannonballDensity + " kg/m<sup>3</sup>";
    cannonballMass = cannonballDensity * cannonballVolume;
+
+   cannonballMass = cannonballMass * 100;
+   cannonballMass = Math.trunc(cannonballMass);
+   cannonballMass = cannonballMass/100;
+   document.getElementById("mass").innerHTML = cannonballMass;
 }
 
 function increaseGravity() {
@@ -396,7 +526,11 @@ function increaseBallSize() {
    else if (cannonballRadius >= 5) {
       cannonballRadius = cannonballRadius + 5;
    }
-   document.getElementById("bsize").innerHTML = cannonballRadius + " cm";
+   document.getElementById("ballSize" +
+       "").innerHTML = cannonballRadius + " cm";
+   document.getElementById("volumeEquation").innerHTML = cannonballRadius;
+
+
    targetThreshhold.y = cannonballRadius * 2 / pieceLength;
    if (targetThreshhold.y < 0.5) {
       targetThreshhold.y = 0.5;
@@ -406,6 +540,20 @@ function increaseBallSize() {
    let r = cannonballRadius/100;
    cannonballVolume = 4 * Math.PI * r * r * r / 3;
    cannonballMass = cannonballDensity * cannonballVolume;
+   cannonballVolume = cannonballVolume * 100;
+   cannonballVolume = Math.trunc(cannonballVolume);
+   cannonballVolume = cannonballVolume / 100;
+   document.getElementById("volume").innerHTML = cannonballVolume;
+
+   cannonballMass = cannonballMass * 100;
+   cannonballMass = Math.trunc(cannonballMass);
+   cannonballMass = cannonballMass/100;
+   document.getElementById("mass").innerHTML = cannonballMass;
+
+   cannonBaseRadius = cannonballRadius * 1.1;
+   cannonLength = cannonBaseRadius * 3;
+   barrelEnd.x = cannonLength;
+   barrelEnd.y = cannon.y;
 }
 
 function decreaseBallSize() {
@@ -417,7 +565,10 @@ function decreaseBallSize() {
          cannonballRadius = cannonballRadius - 1;
       }
    }
-   document.getElementById("bsize").innerHTML = cannonballRadius + " cm";
+   document.getElementById("ballSize" +
+       "").innerHTML = cannonballRadius + " cm";
+   document.getElementById("volumeEquation").innerHTML = cannonballRadius;
+
    targetThreshhold.y = cannonballRadius * 2 / pieceLength;
    if (targetThreshhold.y < 0.5) {
       targetThreshhold.y = 0.5;
@@ -427,6 +578,15 @@ function decreaseBallSize() {
    let r = cannonballRadius/100;
    cannonballVolume = 4 * Math.PI * r * r * r / 3;
    cannonballMass = cannonballDensity * cannonballVolume;
+
+   cannonballVolume = cannonballVolume * 100;
+   cannonballVolume = Math.trunc(cannonballVolume);
+   cannonballVolume = cannonballVolume / 100;
+   document.getElementById("volume").innerHTML = cannonballVolume;
+   cannonballMass = cannonballMass * 100;
+   cannonballMass = Math.trunc(cannonballMass);
+   cannonballMass = cannonballMass/100;
+   document.getElementById("mass").innerHTML = cannonballMass;
 }
 
 function toggleRadius(event){
@@ -437,7 +597,10 @@ function toggleRadius(event){
    else if (rad > 0){
       cannonballRadius = rad;
    }
-   document.getElementById("bsize").innerHTML = rad + " cm";
+   document.getElementById("ballSize" +
+       "").innerHTML = rad + " cm";
+   document.getElementById("volumeEquation").innerHTML = cannonballRadius;
+
    targetThreshhold.y = cannonballRadius * 2 / pieceLength;
    if (targetThreshhold.y < 0.5) {
       targetThreshhold.y = 0.5;
@@ -446,6 +609,15 @@ function toggleRadius(event){
    let r = cannonballRadius/100;
    cannonballVolume = 4 * Math.PI * r * r * r / 3;
    cannonballMass = cannonballDensity * cannonballVolume;
+
+   cannonballVolume = cannonballVolume * 100;
+   cannonballVolume = Math.trunc(cannonballVolume);
+   cannonballVolume = cannonballVolume / 100;
+   document.getElementById("volume").innerHTML = cannonballVolume;
+   cannonballMass = cannonballMass * 100;
+   cannonballMass = Math.trunc(cannonballMass);
+   cannonballMass = cannonballMass/100;
+   document.getElementById("mass").innerHTML = cannonballMass;
    event.preventDefault();
 }
 
@@ -487,6 +659,7 @@ function updatePositions()
          cannonball.y - cannonballRadius < (blocker.end.y + blockerThreshhold.y))
       {
          blockerSound.play(); // play blocker hit sound
+         missed = false;
          cannonballVelocity.x *= -1; // reverse cannonball's direction
          timeLeft -= MISS_PENALTY; // penalize the user
       } // end if
@@ -496,6 +669,9 @@ function updatePositions()
          cannonball.x - cannonballRadius < 0)
       {
          cannonballOnScreen = false; // remove cannonball from screen
+         if (missed === true) {
+            missedSound.play();
+         }
       } // end else if
 
       // check for collisions with top and bottom walls
@@ -503,6 +679,9 @@ function updatePositions()
          cannonball.y - cannonballRadius < 0)
       {
          cannonballOnScreen = false; // make the cannonball disappear
+         if (missed === true) {
+            missedSound.play();
+         }
       } // end else if
 
       // check for cannonball collision with target
@@ -529,9 +708,29 @@ function updatePositions()
                {
                   stopTimer(); // game over so stop the interval timer
                   draw(); // draw the game pieces one final time
-                  showGameOverDialog("You Won!"); // show winning dialog
+                  if (TARGET_PIECES === 1) {
+                     showGameOverDialog("You Won! Not bad.. considering");
+                  }
+                  else {
+                     showGameOverDialog("You Won!");
+                  }
                   var c = document.createElement("P");
-                  c.innerText = timeElapsed + " seconds ";
+                  var txt = "";
+                  if (scores++ >0) {
+                     txt += ", " + timeElapsed;
+                  }
+                  else {
+                     txt += timeElapsed;
+                  }
+                  if (timeElapsed === 1) {
+                        txt += " second";
+                  }
+                  else {
+                     txt += " seconds ";
+                  }
+                  c.innerText = txt;
+                  c.classList.add("horizontal");
+                  document.getElementById("highScoreTitle").style.display = "block";
                   document.getElementById("highScores").appendChild(c);
                } // end if
             }
@@ -587,9 +786,12 @@ function fireCannonball(event)
 
    var angle = alignCannon(event); // get the cannon barrel's angle
 
+   missed = true;
+
    // move the cannonball to be inside the cannon
-   cannonball.x = cannonballRadius; // align x-coordinate with cannon
-   cannonball.y = canvasHeight / 2; // centers ball vertically
+   cannonball.x = cannonLength; // align x-coordinate with cannon
+   cannonball.y = cannon.y - barrelDif; // centers ball vertically
+   console.log(barrelEnd.y);
 
    // get the x component of the total velocity
    cannonballVelocity.x = (cannonballSpeed * Math.sin(angle)).toFixed(0);
@@ -608,8 +810,21 @@ function alignCannon(event)
 {
    // get the location of the click 
    var clickPoint = new Object();
-   clickPoint.x = event.x;
-   clickPoint.y = event.y;
+
+   // get the relative offset of the canvas
+    var totalOffsetX = 0;
+    var totalOffsetY = 0;
+    var currentElement = canvas;
+    do{
+        totalOffsetX += currentElement.offsetLeft - currentElement.scrollLeft;
+        totalOffsetY += currentElement.offsetTop - currentElement.scrollTop;
+    }
+    while(currentElement = currentElement.offsetParent)
+
+   // get the location of the click
+   var clickPoint = {};
+   clickPoint.x = event.x - totalOffsetX;
+   clickPoint.y = event.y - totalOffsetY;
 
    // compute the click's distance from center of the screen
    // on the y-axis
@@ -628,7 +843,8 @@ function alignCannon(event)
    // calculate the end point of the cannon's barrel
    barrelEnd.x = (cannonLength * Math.sin(angle)).toFixed(0);
    barrelEnd.y =
-      (-cannonLength * Math.cos(angle) + canvasHeight / 2).toFixed(0);
+      (-cannonLength * Math.cos(angle) + cannon.y).toFixed(0);
+   barrelDif = cannon.y - barrelEnd.y;
 
    return angle; // return the computed angle
 } // end function alignCannon
@@ -642,23 +858,36 @@ function draw()
    context.font = "bold 24px sans-serif";
    context.textBaseline = "top";
 
+   if (mars === true || moon === true || jupiter === true || earth === true) {
+      document.getElementById("msg").style.color = "white";
+   }
    if (mars === true) {
-      var marsBackground = new Image();
-      marsBackground.src = "mars.jpg";
       // display time remaining
-      //context.fillStyle
+      context.fillStyle = "white";
       document.body.style.background = "#ff353d";
 
       context.drawImage(marsBackground,0,0, canvas.width, canvas.height);
    }
    else if (earth === true) {
-      earthBackground = new Image();
-      earthBackground.src = "earth.png";
       // display time remaining
-      //context.fillStyle
+      context.fillStyle = "white";
       document.body.style.background = "#00bd13";
 
       context.drawImage(earthBackground,0,0, canvas.width, canvas.height);
+   }
+   else if (moon === true) {
+      // display time remaining
+      context.fillStyle = "white";
+      document.body.style.background = "yellow";
+
+      context.drawImage(moonBackground,0,0, canvas.width, canvas.height);
+   }
+   else if (jupiter === true) {
+      // display time remaining
+      context.fillStyle = "white";
+      document.body.style.background = "#3800ca";
+
+      context.drawImage(jupiterBackground,0,0, canvas.width, canvas.height);
    }
 
    context.fillText("Time remaining: " + timeLeft, 5, 5);
@@ -677,15 +906,15 @@ function draw()
    // draw the cannon barrel
    context.beginPath(); // begin a new path
    context.strokeStyle = "black";
-   context.moveTo(0, canvasHeight / 2); // path origin
+   context.moveTo(0, cannon.y); // path origin
    context.lineTo(barrelEnd.x, barrelEnd.y);
-   context.lineWidth = lineWidth; // line width
+   context.lineWidth = 2 * cannonballRadius; // line width
    context.stroke(); //draw path
 
    // draw the cannon base
    context.beginPath();
    context.fillStyle = "gray";
-   context.arc(0, canvasHeight / 2, cannonBaseRadius, 0, Math.PI * 2);
+   context.arc(0, cannon.y, cannonballRadius * 1.1, 0, Math.PI * 2);
    context.closePath();
    context.fill();
 
@@ -711,9 +940,9 @@ function draw()
 
          // alternate coloring the pieces yellow and blue
          if (i % 2 === 0)
-            context.strokeStyle = "blue";
+            context.strokeStyle = DARK_COLOR;
          else
-            context.strokeStyle = "lavender";
+            context.strokeStyle = LIGHT_COLOR;
 
          context.moveTo(currentPoint.x, currentPoint.y); // path origin
          context.lineTo(currentPoint.x, currentPoint.y + pieceLength);
@@ -730,6 +959,8 @@ function draw()
 function showGameOverDialog(message)
 {
    document.getElementById("Message").innerHTML = message;
+   document.getElementById("Message").style.display = "block";
+   document.getElementById("scores").style.display = "block";
    document.getElementById("scores").innerHTML = "Shots fired: " + shotsFired +
       "</br>Total time: " + timeElapsed + " seconds ";
 } // end function showGameOverDialog
