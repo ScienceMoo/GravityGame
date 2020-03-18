@@ -201,8 +201,6 @@ function stopTimer()
 // relative to the size of the canvas before the game begins
 function resetElements()
 {
-   document.getElementById("Message").style.display = "none";
-   document.getElementById("scores").style.display = "none";
    var w = canvas.width;
    var h = canvas.height;
    canvasWidth = w; // store the width
@@ -275,8 +273,6 @@ function resetElements()
 // reset all the screen elements and start a new game
 function newGame()
 {
-   document.getElementById("Message").style.display = "none";
-   document.getElementById("scores").style.display = "none";
    resetElements(); // reinitialize all game elements
    stopTimer(); // terminate previous interval timer
    document.getElementById( "startButton" ).value = "Restart";
@@ -855,34 +851,35 @@ function draw()
 {
    canvas.width = canvas.width; // clears the canvas (from W3C docs)
 
-   // display time remaining
-   context.fillStyle = "white";
-   context.fontFamily = "Futura, sans serif";
-   context.font = "bold 24px sans-serif";
-   context.textBaseline = "top";
-   context.fillText("Time remaining: " + timeLeft, 5, 5);
-
-   if (mars === true || moon === true || jupiter === true || earth === true) {
-      document.getElementById("msg").style.color = "white";
-   }
    if (mars === true) {
       document.body.style.background = "#ff353d";
       context.drawImage(marsBackground,0,0, canvas.width, canvas.height);
+      context.fillStyle = "white";
    }
    else if (earth === true) {
       document.body.style.background = "#00bd13";
       context.drawImage(earthBackground,0,0, canvas.width, canvas.height);
+      context.fillStyle = "white";
    }
    else if (moon === true) {
       document.body.style.background = "yellow";
       context.drawImage(moonBackground,0,0, canvas.width, canvas.height);
+      context.fillStyle = "white";
    }
    else if (jupiter === true) {
       document.body.style.background = "#3800ca";
       context.drawImage(jupiterBackground,0,0, canvas.width, canvas.height);
+      context.fillStyle = "white";
+   }
+   else {
+      context.fillStyle = "black";
    }
 
-
+   // display time remaining
+   context.fontFamily = "Futura, sans serif";
+   context.font = "bold 24px sans-serif";
+   context.textBaseline = "top";
+   context.fillText("Time remaining: " + timeLeft, 5, 5);
 
    // if a cannonball is currently on the screen, draw it
    if (cannonballOnScreen)
@@ -946,11 +943,14 @@ function draw()
 // display an alert when the game ends
 function showGameOverDialog(message)
 {
-   document.getElementById("Message").innerHTML = message;
-   document.getElementById("Message").style.display = "block";
-   document.getElementById("scores").style.display = "block";
-   document.getElementById("scores").innerHTML = "Shots fired: " + shotsFired +
-      "</br>Total time: " + timeElapsed + " seconds ";
+   context.fillStyle = "white";
+   context.fontFamily = "Futura, sans serif";
+   context.font = "bold 20px sans-serif";
+   context.textBaseline = "top";
+   context.fillText(message, 40, 60);
+
+   context.fillText("Shots fired: " + shotsFired, 40, 90);
+   context.fillText("Total time: " + timeElapsed + " seconds ", 40, 120);
 } // end function showGameOverDialog
 
 window.addEventListener("load", setupGame, false);
