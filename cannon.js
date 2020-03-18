@@ -1,6 +1,4 @@
-// Fig. 14.27 cannon.js
-// Logic of the Cannon Game
-var canvas; // the canvas
+var canvas;
 var context; // used for drawing on the canvas
 
 var mars = false;
@@ -15,6 +13,9 @@ var moonBackground = new Image();
 moonBackground.src = "moon.jpg";
 var jupiterBackground = new Image();
 jupiterBackground.src = "jupiter.jpg";
+
+var bluePortal = new Image();
+bluePortal.src = "blueportal.png";
 
 var scores = 0;
 
@@ -854,43 +855,34 @@ function draw()
 {
    canvas.width = canvas.width; // clears the canvas (from W3C docs)
 
+   // display time remaining
+   context.fillStyle = "white";
    context.fontFamily = "Futura, sans serif";
    context.font = "bold 24px sans-serif";
    context.textBaseline = "top";
+   context.fillText("Time remaining: " + timeLeft, 5, 5);
 
    if (mars === true || moon === true || jupiter === true || earth === true) {
       document.getElementById("msg").style.color = "white";
    }
    if (mars === true) {
-      // display time remaining
-      context.fillStyle = "white";
       document.body.style.background = "#ff353d";
-
       context.drawImage(marsBackground,0,0, canvas.width, canvas.height);
    }
    else if (earth === true) {
-      // display time remaining
-      context.fillStyle = "white";
       document.body.style.background = "#00bd13";
-
       context.drawImage(earthBackground,0,0, canvas.width, canvas.height);
    }
    else if (moon === true) {
-      // display time remaining
-      context.fillStyle = "white";
       document.body.style.background = "yellow";
-
       context.drawImage(moonBackground,0,0, canvas.width, canvas.height);
    }
    else if (jupiter === true) {
-      // display time remaining
-      context.fillStyle = "white";
       document.body.style.background = "#3800ca";
-
       context.drawImage(jupiterBackground,0,0, canvas.width, canvas.height);
    }
 
-   context.fillText("Time remaining: " + timeLeft, 5, 5);
+
 
    // if a cannonball is currently on the screen, draw it
    if (cannonballOnScreen)
@@ -918,12 +910,8 @@ function draw()
    context.closePath();
    context.fill();
 
-   // draw the blocker
-   context.beginPath(); // begin a new path
-   context.moveTo(blocker.start.x, blocker.start.y); // path origin
-   context.lineTo(blocker.end.x, blocker.end.y);
-   context.lineWidth = lineWidth; // line width
-   context.stroke(); //draw path
+   // draw blocker
+   context.drawImage(bluePortal,blocker.start.x - lineWidth, blocker.start.y , 2 * lineWidth, blockerLength);
 
    // initialize currentPoint to the starting point of the target
    var currentPoint = new Object();
