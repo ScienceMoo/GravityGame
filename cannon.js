@@ -98,7 +98,11 @@ function setupGame()
 {
    // stop timer if document unload event occurs
    document.addEventListener( "unload", stopTimer, false );
+
+   // restart game if a key is pressed
    document.addEventListener( "keypress", newGame, false );
+
+   // move the cannon
    document.addEventListener( "keydown", moveCannon, false);
 
    // get the canvas, its context and setup its click event handler
@@ -155,23 +159,22 @@ function setupGame()
    document.getElementById( "reverseGravity" ).addEventListener(
       "click", reverseGravity);
 
-   // JavaScript Object representing game items
-   blocker = new Object(); // object representing blocker line
-   blocker.start = new Object(); // will hold x-y coords of line start
-   blocker.end = new Object(); // will hold x-y coords of line end
-   target = new Object(); // object representing target line
-   target.start = new Object(); // will hold x-y coords of line start
-   target.end = new Object(); // will hold x-y coords of line end
-   cannonball = new Object(); // object representing cannonball point
-   cannonballVelocity = new Object();  //will hold x-y coords of velocity
-   barrelEnd = new Object(); // object representing end of cannon barrel
-   cannon = new Object();
+   blocker = {};
+   blocker.start = {}; // will hold x-y coords of line start
+   blocker.end = {}; // will hold x-y coords of line end
+   target = {};
+   target.start = {}; // will hold x-y coords of line start
+   target.end = {}; // will hold x-y coords of line end
+   cannonball = {};
+   cannonballVelocity = {};  //will hold x-y coords of velocity
+   barrelEnd = {};
+   cannon = {};
 
    // initialize hitStates as an array
    hitStates = new Array(TARGET_PIECES);
 
-   blockerThreshhold = new Object(); // will hold x-y coords of blocker threshhold
-   targetThreshhold = new Object(); // will hold x-y coords
+   blockerThreshhold = {}; // will hold x-y coords of blocker threshhold
+   targetThreshhold = {}; // will hold x-y coords
 
    // get sounds
    targetSound = document.getElementById( "targetSound" );
@@ -183,14 +186,12 @@ function setupGame()
    newGame();
 } // end function setupGame
 
-// set up interval timer to update game
 function startTimer()
 {
    canvas.addEventListener( "click", fireCannonball, false );
    intervalTimer = window.setInterval( updatePositions, TIME_INTERVAL );
 } // end function startTimer
 
-// terminate interval timer
 function stopTimer()
 {
    canvas.removeEventListener( "click", fireCannonball, false );
@@ -207,9 +208,6 @@ function resetElements()
    canvasHeight = h; // store the height
    cannonBaseRadius = cannonballRadius * 1.1;
    cannonLength = cannonBaseRadius * 3;
-
-   //cannonballRadius = w / 36; // cannonball radius 1/36 canvas width
-   //cannonballSpeed = w * 1.3; // cannonball speed multiplier
 
    lineWidth = w / 40; // target and blocker 1/24 canvas width
 
